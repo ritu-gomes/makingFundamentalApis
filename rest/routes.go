@@ -1,23 +1,18 @@
-package cmd
+package rest
 
 import (
-	"ecommerce/handlers"
-	"ecommerce/middleware"
+	"ecommerce/rest/handlers"
+	middleware "ecommerce/rest/middlewares"
 	"net/http"
 )
 
 func initRoutes(mux *http.ServeMux, manager *middleware.Manager) {
-	mux.Handle("GET /ritu", 
-		manager.With(
-			http.HandlerFunc(handlers.Test),
-		))
-
 	mux.Handle("GET /products", 
 		manager.With(
 			http.HandlerFunc(handlers.GetProducts),
 		))
 
-	mux.Handle("GET /products/{productId}", 
+	mux.Handle("GET /products/{id}", 
 		manager.With(
 			http.HandlerFunc(handlers.GetProductById),
 		))
@@ -25,5 +20,15 @@ func initRoutes(mux *http.ServeMux, manager *middleware.Manager) {
 	mux.Handle("POST /products", 
 		manager.With(
 			http.HandlerFunc(handlers.CreateProduct),
+		))
+	
+	mux.Handle("PUT /products/{id}", 
+		manager.With(
+			http.HandlerFunc(handlers.UpdateProduct),
+		))
+
+	mux.Handle("DELETE /products/{id}", 
+		manager.With(
+			http.HandlerFunc(handlers.DeleteProduct),
 		))
 }

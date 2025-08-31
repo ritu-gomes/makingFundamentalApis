@@ -8,7 +8,45 @@ type Product struct {
 	ImageUrl    string  `json:"imageUrl"`
 }
 
-var ProductList []Product
+var productList []Product
+
+func Store(p Product) Product {
+	p.Id = len(productList) + 1
+	productList = append(productList, p)
+	return p
+}
+
+func List() []Product {
+	return productList
+}
+
+func Get(productId int) *Product {
+	for _, product := range productList {
+		if product.Id == productId {
+			return &product
+		}
+	}
+	return nil
+}
+
+func Update(product Product) {
+	for idx, p := range productList {
+		if p.Id == product.Id {
+			productList[idx] = product
+		}
+	}
+}
+
+func Delete(productId int) {
+	var temptList []Product
+	for _, p := range productList {
+		if p.Id != productId {
+			temptList = append(temptList, p)
+		}
+	}
+
+	productList = temptList
+}
 
 func init() {
 	prod1 := Product{
@@ -50,6 +88,6 @@ func init() {
 	// 	Price:       79.99,
 	// 	ImageUrl:    "https://sonysmart.com.bd/public/uploads/all/G7qeCeK42taREYyfLLxQppDfnH4L0UKvj23z9QDW.jpg",
 	// }
-	ProductList = []Product{prod1, prod2, prod3, prod4}
+	productList = []Product{prod1, prod2, prod3, prod4}
 
 }
