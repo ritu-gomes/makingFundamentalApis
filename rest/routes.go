@@ -20,16 +20,19 @@ func initRoutes(mux *http.ServeMux, manager *middleware.Manager) {
 	mux.Handle("POST /products", 
 		manager.With(
 			http.HandlerFunc(handlers.CreateProduct),
+			middleware.AuthenticateJWT,
 		))
 	
 	mux.Handle("PUT /products/{id}", 
 		manager.With(
 			http.HandlerFunc(handlers.UpdateProduct),
+			middleware.AuthenticateJWT,
 		))
 
 	mux.Handle("DELETE /products/{id}", 
 		manager.With(
 			http.HandlerFunc(handlers.DeleteProduct),
+			middleware.AuthenticateJWT,
 		))
 	
 	mux.Handle("POST /users", 
