@@ -1,14 +1,11 @@
 package user
 
 import (
-	"ecommerce/config"
-	"ecommerce/database"
 	"ecommerce/util"
 	"encoding/json"
 	"fmt"
 	"net/http"
 )
-
 type ReqLogin struct {
 	Email string `json:"email"`
 	Password string `json:"password"`
@@ -25,15 +22,16 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usr := database.Find(reqLogin.Email, reqLogin.Password)
+	usr, err := h.userRepo.Get(reqLogin.Email, reqLogin.Password)
+	if err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+	}
 	if usr == nil {
 		http.Error(w, "invalid credentials", http.StatusBadRequest)
 		return
 	}
 
-	cnf := config.GetConfig()
-
-	accessToken, err := util.CreateJwt(cnf.JwtSecretKey, util.Payload{
+	accessToken, err := util.CreateJwt(h.cnf.JwtSecretKey, util.Payload{
 		Sub: usr.ID,
 		FirstName: usr.FirstName,
 		LastName: usr.LastName,

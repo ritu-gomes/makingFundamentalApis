@@ -53,7 +53,7 @@ func loadConfig() {
 		os.Exit(1)
 	}
 
-	configurations = &Config{
+	configurations  = &Config{
 		Version: version,
 		ServiceName: serviceName,
 		HttpPort: int(port),

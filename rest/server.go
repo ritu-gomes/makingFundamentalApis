@@ -21,7 +21,11 @@ func NewServer(
 	productHandler *product.Handler,
 	userHandler *user.Handler,
 	) *Server {
-	return &Server{}
+	return &Server{
+		cnf: cnf,
+		productHandler: productHandler,
+		userHandler: userHandler,
+	}
 }
 
 func (server *Server) Start() {
