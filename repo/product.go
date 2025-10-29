@@ -1,11 +1,17 @@
 package repo
 
+import (
+	"database/sql"
+
+	"github.com/jmoiron/sqlx"
+)
+
 type Product struct {
-	Id          int     `json:"id"`
-	Title       string  `json:"title"`
-	Description string  `json:"description"`
-	Price       float64 `json:"price"`
-	ImageUrl    string  `json:"imageUrl"`
+	Id          int     `json:"id" db:"id"`
+	Title       string  `json:"title" db:"title"`
+	Description string  `json:"description" db:"description"`
+	Price       float64 `json:"price" db:"price"`
+	ImageUrl    string  `json:"imageUrl" db:"image_url"`
 }
 
 type ProductRepo interface {
@@ -17,89 +23,98 @@ type ProductRepo interface {
 }
 
 type productRepo struct {
-	productList []*Product
+	db *sqlx.DB
 }
 
-func generateInitialProducts(r *productRepo) {
-	prod1 := &Product{
-		Id:          1,
-		Title:       "Wireless Mouse",
-		Description: "Ergonomic wireless mouse with USB receiver",
-		Price:       25.99,
-		ImageUrl:    "https://m.media-amazon.com/images/I/61LtuGzXeaL._AC_SL1500_.jpg",
+
+func NewProductRepo(db *sqlx.DB) ProductRepo {
+	repo := &productRepo{
+		db: db,
 	}
-
-	prod2 := &Product{
-		Id:          2,
-		Title:       "Mechanical Keyboard",
-		Description: "RGB backlit keyboard with clicky switches",
-		Price:       59.99,
-		ImageUrl:    "https://cdn.thewirecutter.com/wp-content/media/2024/04/mechanicalkeyboards-2048px-1353-2x1-1.jpg?width=2048&quality=75&crop=2:1&auto=webp",
-	}
-
-	prod3 := &Product{
-		Id:          3,
-		Title:       "USB-C Hub",
-		Description: "7-in-1 USB-C hub with HDMI, USB, and Ethernet",
-		Price:       39.50,
-		ImageUrl:    "https://www.ryans.com/storage/products/main/ugreen-type-c-male-to-quad-usb-female-meter-hub-11646050628.webp",
-	}
-
-	prod4 := &Product{
-		Id:          4,
-		Title:       "Full HD Webcam",
-		Description: "1080p webcam with built-in mic and autofocus",
-		Price:       49.00,
-		ImageUrl:    "https://diamu.com.bd/wp-content/uploads/2021/07/Logitech-C920-HD-Pro-Webcam-768x768.jpg.webp",
-	}
-
-	r.productList = append(r.productList, prod1, prod2, prod3, prod4)
-
-}
-
-func NewProductRepo() ProductRepo {
-	repo := &productRepo{}
-
-	generateInitialProducts(repo)
 	return repo
 }
 
 func (r *productRepo) Create(p Product) (*Product, error) {
-	p.Id = len(r.productList) + 1
-	r.productList = append(r.productList, &p)
-	return &p, nil
+	query := `
+		INSERT INTO products (
+			title,
+			description, 
+			price, 
+			image_url)
+		VALUES (
+			$1, 
+			$2, 
+			$3, 
+			$4)
+		RETURNING id `
+
+		row := r.db.QueryRow(query, p.Title, p.Description, p.Price, p.ImageUrl)
+		err := row.Scan(&p.Id)
+		if err != nil {
+			return nil, err
+		}
+
+		return &p, nil
 }
 
 func (r *productRepo) Get(productId int) (*Product, error) {
-	for _, product := range r.productList {
-		if product.Id == productId {
-			return product, nil
+	var prod Product
+
+	query := `
+		SELECT id, title, description, price, img_url
+		FROM products
+		WHERE id = $1
+		LIMIT 1
+	`
+
+	err := r.db.Get(&prod, query, productId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
 		}
+		return nil, err
 	}
-	return nil, nil
+
+	return &prod, nil
 }
 
 func (r *productRepo) List() ([]*Product, error) {
-	return r.productList, nil
+	var prodList []*Product
+
+	query := `SELECT * FROM products;`
+
+	err := r.db.Select(&prodList, query)
+	if err != nil {
+		return nil, err
+	}
+
+	return prodList, nil
 }
 
 func (r *productRepo) Delete(productId int) error {
-	var temptList []*Product
-	for _, p := range r.productList {
-		if p.Id != productId {
-			temptList = append(temptList, p)
-		}
+	query := `
+		DELETE FROM products WHERE id = $1
+	`
+	_, err := r.db.Exec(query, productId)
+	if err != nil {
+		return err
 	}
 
-	r.productList = temptList
 	return nil
 }
 
 func (r *productRepo) Update(p Product) (*Product, error) {
-	for idx, prod := range r.productList {
-		if prod.Id == p.Id {
-			r.productList[idx] = &p
-		}
+	query := `
+		UPDATE products 
+		SET title=$1, description=$2, price=$3, img_url=$4
+		WHERE id = $5
+	`
+
+	row := r.db.QueryRow(query, p.Title, p.Description, p.Price, p.ImageUrl)
+	err := row.Err()
+	if err != nil {
+		return nil, err
 	}
+
 	return &p, nil
 }

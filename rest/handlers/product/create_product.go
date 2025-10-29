@@ -9,10 +9,10 @@ import (
 )
 
 type ReqCreateProduct struct {
-	Title       string  `json:"title"`
-	Description string  `json:"description"`
-	Price       float64 `json:"price"`
-	ImageUrl    string  `json:"imageUrl"`
+	Title       string  `json:"title" db:"title"`
+	Description string  `json:"description" db:"description"`
+	Price       float64 `json:"price" db:"price"`
+	ImageUrl    string  `json:"image_url" db:"image_url"`
 }
 
 func (h *Handler) CreateProduct(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +33,10 @@ func (h *Handler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 		ImageUrl: req.ImageUrl,
 	})
 	if error != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		// util.SendError(w, http.StatusInternalServerError, )
+		fmt.Println(error)
+		http.Error(w, "internal server error create_product_func", http.StatusInternalServerError)
+		return
 	}
 
 	util.SendData(w, createdProduct, http.StatusCreated)
