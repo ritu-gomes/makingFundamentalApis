@@ -22,14 +22,14 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usr, err := h.userRepo.Get(reqLogin.Email, reqLogin.Password)
+	usr, err := h.svc.Get(reqLogin.Email, reqLogin.Password)
 	if err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 	}
-	if usr == nil {
-		http.Error(w, "invalid credentials", http.StatusBadRequest)
-		return
-	}
+	// if usr == nil {
+	// 	http.Error(w, "invalid credentials", http.StatusBadRequest)
+	// 	return
+	// }
 
 	accessToken, err := util.CreateJwt(h.cnf.JwtSecretKey, util.Payload{
 		Sub: usr.ID,
