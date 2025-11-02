@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"ecommerce/domain"
 	"ecommerce/product"
+	"fmt"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -66,17 +67,31 @@ func (r *productRepo) Get(productId int) (*domain.Product, error) {
 	return &prod, nil
 }
 
-func (r *productRepo) List() ([]*domain.Product, error) {
+func (r *productRepo) List(page, limit int64) ([]*domain.Product, error) {
+	offset := ((page - 1) * limit) + 1
 	var prodList []*domain.Product
 
-	query := `SELECT * FROM products;`
+	query := `SELECT * FROM products LIMIT $1 OFFSET $2;`
 
-	err := r.db.Select(&prodList, query)
+	err := r.db.Select(&prodList, query, limit, offset)
 	if err != nil {
 		return nil, err
 	}
 
 	return prodList, nil
+}
+
+func (r *productRepo) Count() (int64, error) {
+
+	query := `SELECT COUNT(*) FROM products;`
+
+	var count int64
+	err := r.db.QueryRow(query).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count products: %w", err)
+	}
+
+	return count, nil
 }
 
 func (r *productRepo) Delete(productId int) error {
